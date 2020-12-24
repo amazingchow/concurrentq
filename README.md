@@ -1,25 +1,18 @@
-# codequeue
+# photon-dance-concurrent-dequeue
 
 ![dequeue](doc/dequeue.jpg)
-
-## Get Started
-
-### Prerequisites
-
-* OS: Linux
-* Golang: v1.12+
 
 ### Usage
 
 ```golang
 import (
     ...
-    "github.com/amazingchow/codequeue"
+    "github.com/amazingchow/photon-dance-concurrent-dequeue"
     ...
 )
 
 ...
-q := codequeue.NewCoDequeue(256)
+q := condequeue.NewConDequeue(500)
 q.BPush("foo")
 q.BPush("bar")
 
@@ -51,11 +44,7 @@ for q.Len() != 0 {
 
 ### Step 3
 
-* 🔃 Create a new PR using https://github.com/amazingchow/codequeue/compare!
-
-## FAQ
-
-* refer to [FAQ](FAQ.md).
+* 🔃 Create a new PR using https://github.com/amazingchow/photon-dance-concurrent-dequeue/compare!
 
 ## Support
 
