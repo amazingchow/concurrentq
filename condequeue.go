@@ -1,4 +1,4 @@
-package condequeue
+package conqueue
 
 import (
 	"sync"
