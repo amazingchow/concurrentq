@@ -1,36 +1,10 @@
-# photon-dance-concurrent-dequeue
+# photon-dance-concurrent-queue
+
+## no-cap-limit dequeue
 
 ![dequeue](doc/dequeue.jpg)
 
-### Usage
-
-```golang
-import (
-    ...
-    "github.com/amazingchow/photon-dance-concurrent-dequeue"
-    ...
-)
-
-...
-q := condequeue.NewConDequeue(500)
-q.BPush("foo")
-q.BPush("bar")
-
-fmt.Println(q.Len())   // 2
-fmt.Println(q.Front()) // "foo"
-fmt.Println(q.Back())  // "bar"
-
-q.FPop()  // remove "foo"
-q.BPop()  // remove "bar"
-
-q.FPush("hello")
-q.BPush("world")
-
-for q.Len() != 0 {
-    fmt.Println(q.FPop())
-}
-...
-```
+## cap-limit queue
 
 ## Contributing
 
@@ -44,7 +18,7 @@ for q.Len() != 0 {
 
 ### Step 3
 
-* 🔃 Create a new PR using https://github.com/amazingchow/photon-dance-concurrent-dequeue/compare!
+* 🔃 Create a new PR using https://github.com/amazingchow/photon-dance-concurrent-queue/compare!
 
 ## Support
 
