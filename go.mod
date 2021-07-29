@@ -1,8 +1,8 @@
-module github.com/amazingchow/photon-dance-concurrent-dequeue
+module github.com/amazingchow/photon-dance-concurrent-queue
 
-go 1.12
+go 1.15
 
 require (
-	github.com/gammazero/deque v0.0.0-20201010052221-3932da5530cc
-	github.com/stretchr/testify v1.6.1
+	github.com/gammazero/deque v0.1.0
+	github.com/stretchr/testify v1.7.0
 )
