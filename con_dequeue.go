@@ -1,4 +1,4 @@
-package conqueue
+package concurrentq
 
 import (
 	"sync"
@@ -6,42 +6,35 @@ import (
 
 const (
 	// must be equal to 2^x
-	__MinCap = 32
+	_MinCap = 32
 	// must be equal to 2^x
-	__MinShrinkThreshold = 65536
+	_MinShrinkThreshold = 65536
 )
 
 // ConDequeue is a kind of thread-safe double-end-queue
 type ConDequeue struct {
 	mu   sync.RWMutex
-	cond *sync.Cond
-
-	buffer []interface{}
-	cap    int
-	size   int
-	head   int
-	tail   int
+	buf  []interface{}
+	cap  int
+	size int
+	head int
+	tail int
 }
 
 // NewConDequeue returns a new ConDequeue instance.
 func NewConDequeue(cap int) *ConDequeue {
-	if cap < __MinCap {
-		cap = __MinCap
+	if cap < _MinCap {
+		cap = _MinCap
 	} else {
 		cap = nextTwoPower(cap)
 	}
 
 	q := &ConDequeue{}
-
-	lock := sync.Mutex{}
-	q.cond = sync.NewCond(&lock)
-
-	q.buffer = make([]interface{}, cap)
+	q.buf = make([]interface{}, cap)
 	q.cap = cap
 	q.size = 0
 	q.head = 0
 	q.tail = 0
-
 	return q
 }
 
@@ -57,11 +50,10 @@ func nextTwoPower(n int) int {
 func (q *ConDequeue) Len() int {
 	q.mu.RLock()
 	defer q.mu.RUnlock()
-
 	return q.size
 }
 
-// FPush enqueues data from front end.
+// FPush enqueues one element from front end.
 func (q *ConDequeue) FPush(x interface{}) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -69,11 +61,11 @@ func (q *ConDequeue) FPush(x interface{}) {
 	q.growIfNeeded()
 
 	q.head = q.prev(q.head)
-	q.buffer[q.head] = x
+	q.buf[q.head] = x
 	q.size++
 }
 
-// FPop dequeues data from front end.
+// FPop dequeues one element from front end.
 func (q *ConDequeue) FPop() interface{} {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -82,8 +74,8 @@ func (q *ConDequeue) FPop() interface{} {
 		panic("ConDequeue: FPop() called on empty queue")
 	}
 
-	x := q.buffer[q.head]
-	q.buffer[q.head] = nil
+	x := q.buf[q.head]
+	q.buf[q.head] = nil
 	q.head = q.next(q.head)
 	q.size--
 
@@ -92,19 +84,19 @@ func (q *ConDequeue) FPop() interface{} {
 	return x
 }
 
-// BPush enqueue data from back end.
+// BPush enqueues one element from back end.
 func (q *ConDequeue) BPush(x interface{}) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
 	q.growIfNeeded()
 
-	q.buffer[q.tail] = x
+	q.buf[q.tail] = x
 	q.tail = q.next(q.tail)
 	q.size++
 }
 
-// BPop dequeues data from back end.
+// BPop dequeues one element from back end.
 func (q *ConDequeue) BPop() interface{} {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -114,8 +106,8 @@ func (q *ConDequeue) BPop() interface{} {
 	}
 
 	q.tail = q.prev(q.tail)
-	x := q.buffer[q.tail]
-	q.buffer[q.tail] = nil
+	x := q.buf[q.tail]
+	q.buf[q.tail] = nil
 	q.size--
 
 	q.shrinkIfNeeded()
@@ -123,7 +115,7 @@ func (q *ConDequeue) BPop() interface{} {
 	return x
 }
 
-// Front reads data from front end.
+// Front reads one element from front end.
 func (q *ConDequeue) Front() interface{} {
 	q.mu.RLock()
 	defer q.mu.RUnlock()
@@ -132,10 +124,10 @@ func (q *ConDequeue) Front() interface{} {
 		panic("ConDequeue: Front() called on empty queue")
 	}
 
-	return q.buffer[q.head]
+	return q.buf[q.head]
 }
 
-// Back reads data from back end.
+// Back reads one element from back end.
 func (q *ConDequeue) Back() interface{} {
 	q.mu.RLock()
 	defer q.mu.RUnlock()
@@ -144,10 +136,10 @@ func (q *ConDequeue) Back() interface{} {
 		panic("ConDequeue: Back() called on empty queue")
 	}
 
-	return q.buffer[q.prev(q.tail)]
+	return q.buf[q.prev(q.tail)]
 }
 
-// At reads data at index idx.
+// At reads one element at index idx.
 func (q *ConDequeue) At(idx int) interface{} {
 	q.mu.RLock()
 	defer q.mu.RUnlock()
@@ -156,10 +148,10 @@ func (q *ConDequeue) At(idx int) interface{} {
 		panic("ConDequeue: At() called with index out of range")
 	}
 
-	return q.buffer[(q.head+idx)&(q.cap-1)]
+	return q.buf[(q.head+idx)&(q.cap-1)]
 }
 
-// Set sets data at index idx.
+// Set sets one element at index idx.
 func (q *ConDequeue) Set(idx int, x interface{}) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -168,16 +160,16 @@ func (q *ConDequeue) Set(idx int, x interface{}) {
 		panic("ConDequeue: Set() called with index out of range")
 	}
 
-	q.buffer[(q.head+idx)&(q.cap-1)] = x
+	q.buf[(q.head+idx)&(q.cap-1)] = x
 }
 
-// Clear clears all data.
+// Clear clears all elements.
 func (q *ConDequeue) Clear() {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
 	for cur := q.head; cur != q.tail; cur = (cur + 1) & (q.cap - 1) {
-		q.buffer[cur] = nil
+		q.buf[cur] = nil
 	}
 	q.head = 0
 	q.tail = 0
@@ -208,13 +200,13 @@ func (q *ConDequeue) Rotate(n int) {
 		for ; n < 0; n++ {
 			q.head = q.prev(q.head)
 			q.tail = q.prev(q.tail)
-			q.buffer[q.head] = q.buffer[q.tail]
-			q.buffer[q.tail] = nil
+			q.buf[q.head] = q.buf[q.tail]
+			q.buf[q.tail] = nil
 		}
 	} else {
 		for ; n > 0; n-- {
-			q.buffer[q.tail] = q.buffer[q.head]
-			q.buffer[q.head] = nil
+			q.buf[q.tail] = q.buf[q.head]
+			q.buf[q.head] = nil
 			q.head = q.next(q.head)
 			q.tail = q.next(q.tail)
 		}
@@ -239,8 +231,8 @@ func (q *ConDequeue) growIfNeeded() {
 
 func (q *ConDequeue) shrinkIfNeeded() {
 	// buffer size equals to 4 * queue size
-	// TODO: consider the case that int-type data overflows
-	if q.cap >= __MinShrinkThreshold && q.cap >= (q.size<<2) {
+	// TODO: consider the case that int-type element overflows
+	if q.cap >= _MinShrinkThreshold && q.cap >= (q.size<<2) {
 		// buffer size shrinks to 1/2
 		q.resize(true)
 	}
@@ -248,7 +240,7 @@ func (q *ConDequeue) shrinkIfNeeded() {
 
 func (q *ConDequeue) resize(shrink bool) {
 	if shrink {
-		if q.cap == __MinCap {
+		if q.cap == _MinCap {
 			return
 		}
 		q.cap >>= 1
@@ -258,13 +250,13 @@ func (q *ConDequeue) resize(shrink bool) {
 
 	newBuffer := make([]interface{}, q.cap)
 	if q.tail > q.head {
-		copy(newBuffer, q.buffer[q.head:q.tail])
+		copy(newBuffer, q.buf[q.head:q.tail])
 	} else {
-		n := copy(newBuffer, q.buffer[q.head:])
-		copy(newBuffer[n:], q.buffer[:q.tail])
+		n := copy(newBuffer, q.buf[q.head:])
+		copy(newBuffer[n:], q.buf[:q.tail])
 	}
 
-	q.buffer = newBuffer
+	q.buf = newBuffer
 	q.head = 0
 	q.tail = q.size
 }
