@@ -1,4 +1,4 @@
-name: ci workflow for photon-dance-concurrent-queue
+name: ci workflow for concurrentq
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
       - name: Set up go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.15.11
+          go-version: 1.18.3
       - name: Lint
         uses: golangci/golangci-lint-action@v2.5.2
         with:

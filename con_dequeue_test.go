@@ -1,4 +1,4 @@
-package conqueue
+package concurrentq
 
 import (
 	"testing"

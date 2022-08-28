@@ -1,10 +1,8 @@
-# photon-dance-concurrent-queue
+# concurrentq
 
-## no-cap-limit dequeue
+## What is dequeue?
 
 ![dequeue](doc/dequeue.jpg)
-
-## cap-limit queue
 
 ## Contributing
 
@@ -18,7 +16,7 @@
 
 ### Step 3
 
-* 🔃 Create a new PR using https://github.com/amazingchow/photon-dance-concurrent-queue/compare!
+* 🔃 Create a new PR using https://github.com/amazingchow/concurrentq/compare!
 
 ## Support
 
